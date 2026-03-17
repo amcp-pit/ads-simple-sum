@@ -1,12 +1,12 @@
 name: GitHub Classroom Workflow
 
-#on: workflow_dispatch
-
-on: 
-  workflow_dispatch:
+on:
   push:
+    branches: [ main ]
     paths-ignore:
-      - '.github/*'
+      - '.github/workflows/*'
+  pull_request:
+    branches: [ main ]
 
 permissions:
   checks: write
@@ -20,21 +20,132 @@ jobs:
     steps:
       - name: Get repository code
         uses: actions/checkout@v4
-      - name: Build
+      - name: Check repository clean
+        run: ./scripts/check_clean.sh
+      - name: Check requirements
         run: |
-             !(grep -qwRE --include=*.{cc,cpp,h,hpp} '<vector>|<list>|<string>|<algorithm>|<stack>|<queue>|<deque>|<set>|<map>|<bits' ./* ) &&  (echo \"Build - OK\" )  || ( echo \"Forbiden STL containers\" && exit 9 )
-             cmake .
-             cmake --build .
-      - name: Autograding
-        uses: amcp-pit/autograding@v1
-      - name: Memory leaks
+             !(grep -qwRE --include=*.{cc,cpp,h,hpp} '<vector>|<list>|<string>|<algorithm>|<stack>|<queue>|<deque>|<set>|<map>|<bits' ./* ) &&  (echo \"Check - OK\" )  || ( echo \"Forbiden STL containers\" && exit 9 )
+      - name: Check code style
         run: |
-             valgrind --tool=memcheck --leak-check=full --undef-value-errors=no --error-exitcode=111 ./simplesum tests/input10.txt
+             clang-format --version
+             find "." \( -name '*.cpp' -o -name '*.h*' \) -print0 | xargs -0 clang-format --dry-run --Werror --verbose
       - name: Code linting
         uses: amcp-pit/cpp-linter@v1
         with:
-          extra-args-before: '-xc++ --std=c++20'
+          extra-args-before: '-xc++'
+          extra-args: '-std=c++20'
           after-args: '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON'
+      - name: Build
+        run: ./scripts/build.sh
+
+      - name: Test 1
+        id: test-1
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 1
+          setup-command: ''
+          command: "timeout 1 ./build/simplesum tests/input1.txt > output.txt && numdiff -a 1.0e-14 -q output.txt tests/output1.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 2
+        id: test-2
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 2
+          setup-command: ''
+          command: "timeout 1 ./build/simplesum tests/input2.txt > output.txt && numdiff -a 1.0e-14 -q output.txt tests/output2.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 3
+        id: test-3
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 3
+          setup-command: ''
+          command: "timeout 1 ./build/simplesum tests/input3.txt > output.txt && numdiff -a 1.0e-14 -q output.txt tests/output3.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 4
+        id: test-4
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 4
+          setup-command: ''
+          command: "timeout 1 ./build/simplesum tests/input4.txt > output.txt && numdiff -a 1.0e-14 -q output.txt tests/output4.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 5
+        id: test-5
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 5
+          setup-command: ''
+          command: "timeout 1 ./build/simplesum tests/input5.txt > output.txt && numdiff -a 1.0e-14 -q output.txt tests/output5.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 6
+        id: test-6
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 6
+          setup-command: 'cp -f ~/ads-tests/simple-sum/*.* ./tests/ && echo "Tests added"'
+          command: "timeout 1 ./build/simplesum tests/input6.txt > output.txt && numdiff -a 1.0e-14 -q output.txt tests/output6.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 7
+        id: test-7
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 7
+          setup-command: ''
+          command: "timeout 1 ./build/simplesum tests/input7.txt > output.txt && numdiff -a 1.0e-14 -q output.txt tests/output7.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 8
+        id: test-8
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 8
+          setup-command: ''
+          command: "timeout 2 ./build/simplesum tests/input8.txt > output.txt && numdiff -a 1.0e-13 -q output.txt tests/output8.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 9
+        id: test-9
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 9
+          setup-command: ''
+          command: "timeout 2 ./build/simplesum tests/input9.txt > output.txt && numdiff -a 1.0e-13 -q output.txt tests/output9.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 10
+        id: test-10
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 10
+          setup-command: ''
+          command: "timeout 2 ./build/simplesum tests/input10.txt > output.txt && numdiff -a 1.0e-13 -q output.txt tests/output10.txt"
+          timeout: 1
+          max-score: 1
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          TEST-1_RESULTS: "${{steps.test-1.outputs.result}}"
+          TEST-2_RESULTS: "${{steps.test-2.outputs.result}}"
+          TEST-3_RESULTS: "${{steps.test-3.outputs.result}}"
+          TEST-4_RESULTS: "${{steps.test-4.outputs.result}}"
+          TEST-5_RESULTS: "${{steps.test-5.outputs.result}}"
+          TEST-6_RESULTS: "${{steps.test-6.outputs.result}}"
+          TEST-7_RESULTS: "${{steps.test-7.outputs.result}}"
+          TEST-8_RESULTS: "${{steps.test-8.outputs.result}}"
+          TEST-9_RESULTS: "${{steps.test-9.outputs.result}}"
+          TEST-10_RESULTS: "${{steps.test-10.outputs.result}}"
+        with:
+          runners: test-1,test-2,test-3,test-4,test-5,test-6,test-7,test-8,test-9,test-10
+      - name: Memory leaks
+        run: |
+             valgrind --tool=memcheck --leak-check=full --undef-value-errors=no --error-exitcode=111 ./build/simplesum tests/input8.txt
       - name: Checkout
         uses: actions/checkout@v4
       - name: CPD
