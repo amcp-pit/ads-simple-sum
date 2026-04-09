@@ -128,6 +128,24 @@ jobs:
           command: "timeout 2 ./build/simplesum tests/input10.txt > output.txt && numdiff -a 1.0e-13 -q output.txt tests/output10.txt"
           timeout: 1
           max-score: 1
+      - name: Test 11
+        id: test-11
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 11
+          setup-command: ''
+          command: "timeout 1 ./build/simplesum tests/input11.txt > output.txt && numdiff -a 1.0e-13 -q output.txt tests/output11.txt"
+          timeout: 1
+          max-score: 1
+      - name: Test 12
+        id: test-12
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Test 12
+          setup-command: ''
+          command: "timeout 1 ./build/simplesum tests/input12.txt > output.txt && numdiff -a 1.0e-13 -q output.txt tests/output12.txt"
+          timeout: 1
+          max-score: 1
       - name: Autograding Reporter
         uses: classroom-resources/autograding-grading-reporter@v1
         env:
@@ -141,8 +159,10 @@ jobs:
           TEST-8_RESULTS: "${{steps.test-8.outputs.result}}"
           TEST-9_RESULTS: "${{steps.test-9.outputs.result}}"
           TEST-10_RESULTS: "${{steps.test-10.outputs.result}}"
+          TEST-11_RESULTS: "${{steps.test-11.outputs.result}}"
+          TEST-12_RESULTS: "${{steps.test-12.outputs.result}}"
         with:
-          runners: test-1,test-2,test-3,test-4,test-5,test-6,test-7,test-8,test-9,test-10
+          runners: test-1,test-2,test-3,test-4,test-5,test-6,test-7,test-8,test-9,test-10,test-11,test-12
       - name: Memory leaks
         run: |
              valgrind --tool=memcheck --leak-check=full --undef-value-errors=no --error-exitcode=111 ./build/simplesum tests/input8.txt
